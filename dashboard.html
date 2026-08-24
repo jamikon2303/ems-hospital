@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ศูนย์สั่งการการแพทย์ฉุกเฉิน (EMS Dashboard)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen p-6">
+
+    <div class="max-w-6xl mx-auto">
+        <div class="flex justify-between items-center border-b border-slate-700 pb-4 mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-red-500 flex items-center gap-2">
+                    <span class="relative flex h-4 w-4">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-4 w-4 bg-red-500"></span>
+                    </span>
+                    ศูนย์รับแจ้งเหตุฉุกเฉิน - Realtime
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">รายการแจ้งเหตุฉุกเฉินทั้งหมดจากระบบออนไลน์</p>
+            </div>
+        </div>
+
+        <div id="cases-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="col-span-full text-center text-slate-500 py-12">กำลังรอรับสัญญาณเหตุฉุกเฉิน...</div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyClydi2GyQ6WYYHyksZbs7cxy1ci38YaZc",
+            authDomain: "hospital--ems.firebaseapp.com",
+            databaseURL: "https://hospital--ems-default-rtdb.firebaseio.com",
+            projectId: "hospital--ems",
+            storageBucket: "hospital--ems.firebasestorage.app",
+            messagingSenderId: "253605524625",
+            appId: "1:253605524625:web:486173df5450b436da7b30"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        database.ref('cases').on('value', (snapshot) => {
+            const casesList = document.getElementById('cases-list');
+            casesList.innerHTML = '';
+
+            const data = snapshot.val();
+            if (!data) {
+                casesList.innerHTML = '<div class="col-span-full text-center text-slate-500 py-12">ยังไม่มีการแจ้งเหตุเข้ามาในระบบ</div>';
+                return;
+            }
+
+            Object.keys(data).reverse().forEach(key => {
+                const item = data[key];
+                const mapUrl = `https://www.google.com/maps?q=${item.lat},${item.lng}`;
+
+                const card = document.createElement('div');
+                card.className = "bg-slate-800 border-l-4 border-red-500 rounded-xl p-5 shadow-lg space-y-3";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="bg-red-500/20 text-red-400 text-xs px-2.5 py-1 rounded-md font-semibold">ด่วนที่สุด</span>
+                            <span class="text-xs text-slate-400 ml-2">${item.timestamp}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">${item.symptom}</h3>
+                        <p class="text-slate-300 font-medium text-base mt-1">📞 เบอร์โทร: <a href="tel:${item.phone}" class="text-blue-400 underline">${item.phone}</a></p>
+                    </div>
+                    <div class="pt-2 flex gap-2">
+                        <a href="${mapUrl}" target="_blank" class="flex-1 bg-red-600 hover:bg-red-700 text-white text-center py-2.5 rounded-lg font-medium text-sm transition">
+                            📍 เปิดแผนที่นำทาง (Google Maps)
+                        </a>
+                        <a href="tel:${item.phone}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm text-center">
+                            โทรออก
+                        </a>
+                    </div>
+                `;
+                casesList.appendChild(card);
+            });
+        });
+    </script>
+</body>
+</html>
